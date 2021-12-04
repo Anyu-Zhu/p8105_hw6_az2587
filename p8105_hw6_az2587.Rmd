@@ -41,17 +41,17 @@ birthweight = read_csv("birthweight.csv") %>%
 purrr::map(birthweight, ~sum(is.na(.)))
 ```
 
-There are no missing data in this dataset. 
-
-Based on the two papers related to child's birthweight, I selected family income, gestational age, mother's pre-pregnancy BMI, previous number of low birth weight babies, and number of prior small for gestational age babies as regression variables.
-
-**Papers**
-Fan, Cuifang et al. “Paternal factors to the offspring birth weight: the 829 birth cohort study.” International journal of clinical and experimental medicine vol. 8,7 11370-8. 15 Jul. 2015
-
-Singh, G et al. “Maternal Factors for Low Birth Weight Babies.” Medical journal, Armed Forces India vol. 65,1 (2009): 10-2. doi:10.1016/S0377-1237(09)80045-2
+Then I apply backward selection to identify regression variables:
 
 ```{r}
-model_1 = lm(bwt ~ fincome + gaweeks + ppbmi + pnumlbw + pnumsga, data = birthweight)
+mult.fit = lm(bwt ~ ., data = birthweight)
+step(mult.fit, direction='backward')
+```
+
+
+```{r}
+model_1 = lm(bwt ~ babysex + bhead + blength + delwt + fincome + 
+    gaweeks + mheight + mrace + parity + ppwt + smoken, data = birthweight)
 
 birthweight %>% 
   add_predictions(model_1) %>% 
@@ -73,7 +73,8 @@ Use cross validation to compare:
 ```{r, warning=FALSE}
 cv_df = crossv_mc(birthweight, 100) %>% 
   mutate(
-    model_1 = map(train, ~lm(bwt ~ fincome + gaweeks + ppbmi + pnumlbw + pnumsga, data = .x)),
+    model_1 = map(train, ~lm(bwt ~ babysex + bhead + blength + delwt + fincome + 
+    gaweeks + mheight + mrace + parity + ppwt + smoken, data = .x)),
     model_2 = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
     model_3 = map(train, ~lm(bwt ~ bhead + blength + babysex + 
                bhead * blength + bhead * babysex + blength * babysex + 
@@ -95,7 +96,7 @@ cv_df %>%
   ggplot(aes(x = model, y = rmse)) + geom_boxplot()
 ```
 
-The third model has the smallest value of RMSE while the model I proposed has the largest. (Sadly my model is the least optimal one)
+My regression model has the smallest value of RMSE among the three.
 
 ## Problem 2
 
